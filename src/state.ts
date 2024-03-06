@@ -2,28 +2,25 @@ import * as lodash from 'lodash';
 import { rtdb } from './rtdb';
 import { ref, onValue } from 'firebase/database';
 
-// type Message = {
-// 	from: string;
-// 	message: string;
-// };
-
 const API_BASE_URL = 'http://localhost:3000';
 
 export const state = {
 	data: {
 		name: '',
+		email: '',
 		messages: [],
+		roomId: '',
 	},
 	listeners: [],
+	// No se si llamarle init o de otra manera, pq en realidad no está al principio del todo
 	init() {
 		// localStorage.removeItem('name');
-		const chatroomsRef = ref(rtdb, '/chatroom/messages');
+		const chatroomsRef = ref(rtdb, `/chatroom/rooms/${this.data.roomId}/messages`); // tengo que agregar messages
 		onValue(
 			chatroomsRef,
 			(snapshot) => {
 				const data = snapshot.val();
 				const dataArray = lodash.map(data);
-
 				const currentState = this.getState();
 				currentState.messages = dataArray;
 				this.setState(currentState);
@@ -45,6 +42,16 @@ export const state = {
 		const currentState = this.getState();
 		currentState.name = name;
 		// localStorage.setItem('name', name);
+		this.setState(currentState);
+	},
+	setEmail(email: string) {
+		const currentState = this.getState();
+		currentState.email = email;
+		this.setState(currentState);
+	},
+	setRoomId(roomId: string) {
+		const currentState = this.getState();
+		currentState.roomId = roomId;
 		this.setState(currentState);
 	},
 	pushMessage(message: string) {

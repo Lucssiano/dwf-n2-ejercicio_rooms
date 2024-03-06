@@ -16,4 +16,5 @@ import './components/text';
 
 /* Pages */
 import './pages/home';
+import './pages/signup';
 import './pages/chat';

@@ -1,6 +1,8 @@
 import { Router } from '@vaadin/router';
 import { state } from '../../state';
 
+const API_BASE_URL = 'http://localhost:3000';
+
 class HomePage extends HTMLElement {
 	shadow: ShadowRoot;
 	constructor() {
@@ -16,8 +18,8 @@ class HomePage extends HTMLElement {
         <div class="content-container">
             <custom-text variant="title">Bienvenido</custom-text>
             <form class="home-form">
-                <label> <custom-text>Email:</custom-text> <input type="email" class="fieldset-input" required> </label>
-                <label> <custom-text>Nombre:</custom-text> <input type="text" class="fieldset-input" required> </label>
+                <label> <custom-text>Email:</custom-text> <input type="email" class="fieldset-input email" required> </label>
+                <label> <custom-text>Nombre:</custom-text> <input type="text" class="fieldset-input name" required> </label>
                 <label> 
                    <custom-text>Room:</custom-text> 
                    <select name="room-type" class="select-room">
@@ -25,9 +27,10 @@ class HomePage extends HTMLElement {
                       <option value="Room existente">Room existente</option>
                    </select> 
                 </label>
-                <label class="room-id-label"> <custom-text>Room id:</custom-text> <input type="text" class="fieldset-input" placeholder="ABC123" required> </label>
+                <label class="room-id-label disabled"> <custom-text>Room id:</custom-text> <input type="text" class="fieldset-input roomId" placeholder="ABC123" required disabled> </label>
                 <button class="submit-button"><custom-text variant="large">Comenzar</custom-text></button>
             </form>
+            <button class="submit-button sign-up-button"><custom-text variant="large">Registrarse</custom-text></button>
         </div>
         `;
 		/* No puedo usar los componentes button y fieldset porque no se lleva bien con el form */
@@ -36,16 +39,66 @@ class HomePage extends HTMLElement {
 		const selectEl = this.shadow.querySelector('.select-room') as HTMLSelectElement;
 		const roomIdLabel = this.shadow.querySelector('.room-id-label') as HTMLLabelElement;
 
-		selectEl.addEventListener('change', () => roomIdLabel.classList.toggle('room-id-label'));
+		selectEl.addEventListener('change', () => {
+			roomIdLabel.classList.toggle('disabled');
+			roomIdLabel.querySelector('.roomId').toggleAttribute('disabled');
+		});
 
 		const formEl = this.shadow.querySelector('.home-form');
+		const nameEl = formEl.querySelector('.name') as HTMLInputElement;
+		const emailEl = formEl.querySelector('.email') as HTMLInputElement;
+
 		formEl.addEventListener('submit', (e) => {
 			e.preventDefault();
-			const form = e.target as HTMLFormElement;
-			const inputValue = (form.querySelector('.fieldset-input') as HTMLInputElement).value;
-			state.setName(inputValue);
-			Router.go('/chat');
+			const name = nameEl.value;
+			const email = emailEl.value;
+
+			fetch(`${API_BASE_URL}/auth`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ email }),
+			})
+				.then((res) => res.json())
+				.then((data) => {
+					// Si hay un mensaje es porque se encontró el usuario
+					// Significa que está en la db, por ende setear el mail y el name en el estado
+					if (data.message) {
+						const userId = data.id;
+						state.setName(name);
+						state.setEmail(email);
+
+						if (roomIdLabel.classList.contains('disabled')) {
+							// Crear room
+							// Llevarlo al chat de la room
+							fetch(`${API_BASE_URL}/rooms`, {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({ userId }),
+							})
+								.then((res) => res.json())
+								.then((data) => {
+									if (data.roomId) {
+										state.setRoomId(data.roomId.toString());
+										// Router.go('/chat');
+									}
+								});
+						} else {
+							// Unirse a room existente
+						}
+					} else {
+						// Si no hay mensaje es porque no se encontró el usuario
+						// Significa que no está en la db, por ende que se registre
+						alert('Usuario no encontrado, por favor regístrese');
+					}
+				});
 		});
+
+		const signUpButton = this.shadow.querySelector('.sign-up-button');
+		signUpButton.addEventListener('click', () => Router.go('/signup'));
 
 		const style = document.createElement('style');
 		style.innerHTML = `
@@ -72,6 +125,10 @@ class HomePage extends HTMLElement {
             width: 100%;
             background-color:#9CBBE9;		
         }
+        .sign-up-button {
+            margin-top: 15px;
+            background-color: #FBA834;
+        }
         .select-room, .fieldset-input {
             width: 100%;
             height: 30px;
@@ -82,7 +139,7 @@ class HomePage extends HTMLElement {
         .select-room {
             padding: 5px;
         }
-        .room-id-label {
+        .room-id-label.disabled {
             display: none;
         }
         `;

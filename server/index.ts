@@ -12,7 +12,6 @@ app.use(cors());
 const usersCollection = firestoreDB.collection('users');
 const roomsCollection = firestoreDB.collection('rooms');
 
-/* ### SignUp and Authentication (FIRESTORE DB) ### */
 /* SignUp */
 app.post('/signup', (req, res) => {
 	const { email, name } = req.body;
@@ -20,7 +19,10 @@ app.post('/signup', (req, res) => {
 		.where('email', '==', email)
 		.get()
 		.then((snapshot) => {
-			if (snapshot.empty) usersCollection.add({ email, name }).then((newUserRef) => res.json({ id: newUserRef.id }));
+			if (snapshot.empty)
+				usersCollection
+					.add({ email, name })
+					.then((newUserRef) => res.json({ message: 'Usuario creado de manera exitosa', id: newUserRef.id }));
 			else res.status(400).json({ error: 'User already exists' });
 		});
 });
@@ -32,8 +34,9 @@ app.post('/auth', (req, res) => {
 		.where('email', '==', email)
 		.get()
 		.then((snapshot) => {
-			if (snapshot.empty) res.status(400).json({ error: 'User not found' });
-			else res.json({ message: 'User found', id: snapshot.docs[0].id });
+			if (snapshot.empty) {
+				res.status(400).json({ error: 'User not found' });
+			} else res.json({ message: 'User found', id: snapshot.docs[0].id });
 		});
 });
 
