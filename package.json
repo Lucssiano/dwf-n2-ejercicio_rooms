@@ -1,0 +1,30 @@
+{
+  "name": "chatrooms",
+  "version": "1.0.0",
+  "description": "",
+  "source": "./src/index.html",
+  "scripts": {
+    "dev:front": "parcel",
+    "dev:api": "nodemon --watch ./server/index.ts --exec ts-node ./server/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vaadin/router": "^1.7.5",
+    "cors": "^2.8.5",
+    "firebase": "^10.8.0",
+    "firebase-admin": "^12.0.0",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.11.20",
+    "express": "^4.18.2",
+    "lodash": "^4.17.21",
+    "nanoid": "^3.3.7",
+    "parcel": "^2.11.0",
+    "process": "^0.11.10"
+  }
+}
