@@ -12,6 +12,23 @@ class HomePage extends HTMLElement {
 	connectedCallback() {
 		this.render();
 	}
+	/* Ver de pasarlo al state */
+	createRoom(userId: string) {
+		fetch(`${API_BASE_URL}/rooms`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ userId }),
+		})
+			.then((res) => res.json())
+			.then((data) => {
+				if (data.roomId) {
+					state.setRoomId(data.roomId.toString());
+					Router.go('/chat');
+				}
+			});
+	}
 	render() {
 		this.shadow.innerHTML = `
         <custom-header></custom-header>
@@ -27,7 +44,7 @@ class HomePage extends HTMLElement {
                       <option value="Room existente">Room existente</option>
                    </select> 
                 </label>
-                <label class="room-id-label disabled"> <custom-text>Room id:</custom-text> <input type="text" class="fieldset-input roomId" placeholder="ABC123" required disabled> </label>
+                <label class="room-id-label disabled"> <custom-text>Room id:</custom-text> <input type="text" class="fieldset-input room-id-input" placeholder="ABC123" required disabled> </label>
                 <button class="submit-button"><custom-text variant="large">Comenzar</custom-text></button>
             </form>
             <button class="submit-button sign-up-button"><custom-text variant="large">Registrarse</custom-text></button>
@@ -41,7 +58,7 @@ class HomePage extends HTMLElement {
 
 		selectEl.addEventListener('change', () => {
 			roomIdLabel.classList.toggle('disabled');
-			roomIdLabel.querySelector('.roomId').toggleAttribute('disabled');
+			roomIdLabel.querySelector('.room-id-input').toggleAttribute('disabled');
 		});
 
 		const formEl = this.shadow.querySelector('.home-form');
@@ -53,6 +70,8 @@ class HomePage extends HTMLElement {
 			const name = nameEl.value;
 			const email = emailEl.value;
 
+			// Ver si hacer todos los fetch desde el state
+
 			fetch(`${API_BASE_URL}/auth`, {
 				method: 'POST',
 				headers: {
@@ -62,32 +81,19 @@ class HomePage extends HTMLElement {
 			})
 				.then((res) => res.json())
 				.then((data) => {
-					// Si hay un mensaje es porque se encontró el usuario
-					// Significa que está en la db, por ende setear el mail y el name en el estado
+					// Si hay un mensaje es porque se encontró el usuario, significa que está en la db
+					// Por ende setear el mail y el name en el estado
 					if (data.message) {
 						const userId = data.id;
 						state.setName(name);
 						state.setEmail(email);
 
-						if (roomIdLabel.classList.contains('disabled')) {
-							// Crear room
-							// Llevarlo al chat de la room
-							fetch(`${API_BASE_URL}/rooms`, {
-								method: 'POST',
-								headers: {
-									'Content-Type': 'application/json',
-								},
-								body: JSON.stringify({ userId }),
-							})
-								.then((res) => res.json())
-								.then((data) => {
-									if (data.roomId) {
-										state.setRoomId(data.roomId.toString());
-										// Router.go('/chat');
-									}
-								});
-						} else {
+						if (roomIdLabel.classList.contains('disabled')) this.createRoom(userId);
+						else {
 							// Unirse a room existente
+							const roomId = roomIdLabel.querySelector('.room-id-input') as HTMLInputElement;
+							state.setRoomId(roomId.value);
+							Router.go('/chat');
 						}
 					} else {
 						// Si no hay mensaje es porque no se encontró el usuario

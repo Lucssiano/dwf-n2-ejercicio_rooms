@@ -9,6 +9,9 @@ type Message = {
 class ChatPage extends HTMLElement {
 	shadow: ShadowRoot;
 	messages: Message[];
+	roomId: string;
+	roomOwnerName: string;
+	// userName: string;
 	constructor() {
 		super();
 		this.shadow = this.attachShadow({ mode: 'open' });
@@ -17,25 +20,21 @@ class ChatPage extends HTMLElement {
 		state.subscribe(() => {
 			const currentState = state.getState();
 			this.messages = currentState.messages;
+			this.roomId = currentState.roomId;
+			// this.name = currentState.name;
 			this.render();
-			// this.addTypeOfMessage();
 		});
 		this.render();
 		state.init();
-		// this.addTypeOfMessage();
 	}
-	// addTypeOfMessage() {
-	// 	console.log(state.getState().name);
-	// 	if (state.getState().name == 'pepe') {
-	// 		console.log(document.querySelector('.message-text-container'));
-	// 		document.querySelector('.message-text-container')?.classList.add('other');
-	// 	}
-	// }
 	render() {
+		/* this.roomOwnerName.toLowerCase() == this.userName ? 'green' : '' */
+		/* Para el tema de los mensajes poner en verde a los que son del owner, necesito el id del owner  */
 		this.shadow.innerHTML = `
             <custom-header></custom-header>
             <div class="content-container">
                 <custom-text variant="title">Chat</custom-text>
+                <div class="room-id-container">room id: <span class="room-id">${this.roomId}</span></div>
                 <div class="chat-container">
                 ${
 									this.messages
@@ -55,12 +54,15 @@ class ChatPage extends HTMLElement {
                     <input type="text" class="fieldset-input" required>
                     <button class="submit-button"><custom-text variant="large">Enviar</custom-text></button>
                 </form>
+                <button class="submit-button home-button"><custom-text variant="large">Volver al inicio</custom-text></button>
             </div>
         `;
+
+		const homeButton = this.shadow.querySelector('.home-button');
+		homeButton.addEventListener('click', () => Router.go('/home'));
 		/* Los mensajes de "lucho" siempre se ven en verde y cualquier otro mensaje se ve en gris y el nombre arriba */
 
 		/* No puedo usar los componentes button y fieldset porque no se lleva bien con el form */
-		/* Ver como hacer para que se vea como un mensaje mio o de otro */
 		/* Para el button podría hacer un custom event que cuando haga click en el componente se dispare el submit del form, pero para el fieldset no se me ocurriria como */
 		const formEl = this.shadow.querySelector('.chat-form');
 		formEl.addEventListener('submit', (e) => {
@@ -81,9 +83,15 @@ class ChatPage extends HTMLElement {
         * {
             box-sizing: border-box;
         }
+        .room-id-container {
+            font-family: 'Roboto', sans-serif;
+            font-size: 18px;
+            font-weight: 500;
+            margin-left: 2px;
+        }
         .content-container{
             padding: 15px 30px;
-            height: 90vh;
+            height: 85vh;
             max-width: 600px;
             margin: 0 auto;
         }
@@ -139,6 +147,11 @@ class ChatPage extends HTMLElement {
             width: 100%;
             background-color:#9CBBE9;		
         }
+        .home-button {
+            margin-top: 10px;
+            background-color: #FBA834;
+            padding: 10px 0;
+        }
         .fieldset-input {
             height: 30px;
             border: 1px solid #000;
@@ -151,12 +164,3 @@ class ChatPage extends HTMLElement {
 	}
 }
 customElements.define('chat-page', ChatPage);
-
-//    ${
-// 								${dataArray
-// 									.map((el) => {
-// 										return `<p>${el.from}: ${el.message}</p>`;
-// 										/* Ver de hacer un <custom-text> */
-// 									})
-// 									.join('')}
-// 							;}

@@ -10,25 +10,38 @@ export const state = {
 		email: '',
 		messages: [],
 		roomId: '',
+		roomOwnerName: '',
 	},
 	listeners: [],
 	// No se si llamarle init o de otra manera, pq en realidad no está al principio del todo
 	init() {
 		// localStorage.removeItem('name');
-		const chatroomsRef = ref(rtdb, `/chatroom/rooms/${this.data.roomId}/messages`); // tengo que agregar messages
-		onValue(
-			chatroomsRef,
-			(snapshot) => {
-				const data = snapshot.val();
-				const dataArray = lodash.map(data);
-				const currentState = this.getState();
-				currentState.messages = dataArray;
-				this.setState(currentState);
-			},
-			(error) => {
-				console.error('Error al escuchar cambios en la base de datos:', error);
-			},
-		);
+		const currentState = this.getState();
+		fetch(`${API_BASE_URL}/rooms/${currentState.roomId}`)
+			.then((res) => res.json())
+			.then((data) => {
+				const rtdbRoomId = data.rtdbRoomId;
+				// state.setRoomOwnerName(rtdbRoomId); // Ver donde ponerlo
+				const chatroomsRef = ref(rtdb, `/chatroom/rooms/${rtdbRoomId}/messages`);
+
+				// const ownerRef = ref(rtdb, `/chatroom/rooms/${rtdbRoomId}/owner`);
+				// leerlo una vez
+				// tendria que obtener el id del usuario y comparar si es igual con el del owner
+
+				onValue(
+					chatroomsRef,
+					(snapshot) => {
+						const data = snapshot.val();
+						const dataArray = lodash.map(data);
+						const currentState = this.getState();
+						currentState.messages = dataArray;
+						this.setState(currentState);
+					},
+					(error) => {
+						console.error('Error al escuchar cambios en la base de datos:', error);
+					},
+				);
+			});
 	},
 	getState() {
 		return this.data;
@@ -38,10 +51,12 @@ export const state = {
 		this.listeners.forEach((callback) => callback());
 		console.log('nueva data', this.data);
 	},
+	// setRoomOwnerName(roomId: string) {
+	// 	const currentState = this.getState();
+	// },
 	setName(name: string) {
 		const currentState = this.getState();
 		currentState.name = name;
-		// localStorage.setItem('name', name);
 		this.setState(currentState);
 	},
 	setEmail(email: string) {
@@ -56,13 +71,26 @@ export const state = {
 	},
 	pushMessage(message: string) {
 		const currentState = this.getState();
-		fetch(`${API_BASE_URL}/messages`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({ from: currentState.name, message: message }),
-		});
+		fetch(`${API_BASE_URL}/rooms/${currentState.roomId}`)
+			.then((res) => res.json())
+			.then((data) => {
+				const rtdbRoomId = data.rtdbRoomId;
+				fetch(`${API_BASE_URL}/messages/${rtdbRoomId}`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ from: currentState.name, message }),
+				});
+			});
+
+		// fetch(`${API_BASE_URL}/messages`, {
+		// 	method: 'POST',
+		// 	headers: {
+		// 		'Content-Type': 'application/json',
+		// 	},
+		// 	body: JSON.stringify({ from: currentState.name, message: message }),
+		// });
 	},
 	subscribe(callback: (any) => any) {
 		this.listeners.push(callback);

@@ -66,25 +66,23 @@ app.post('/rooms', (req, res) => {
 });
 
 app.get('/rooms/:roomId', (req, res) => {
-	const { userId } = req.query;
 	const { roomId } = req.params;
 
-	usersCollection
-		.doc(userId.toString())
+	roomsCollection
+		.doc(roomId)
 		.get()
-		.then((user) => {
-			if (user.exists) {
-				roomsCollection
-					.doc(roomId)
-					.get()
-					.then((room) => {
-						if (room.exists) res.json(room.data());
-						else res.status(401).json({ error: 'Room does not exists' });
-					});
-			} else {
-				res.status(401).json({ error: 'User does not exists' });
-			}
+		.then((room) => {
+			if (room.exists) res.json(room.data());
+			else res.status(401).json({ error: 'Room does not exists' });
 		});
+});
+
+app.post('/messages/:rtdbId', (req, res) => {
+	const { rtdbId } = req.params;
+	const chatRoomRef = realTimeDB.ref(`/chatroom/rooms/${rtdbId}/messages`);
+	chatRoomRef.push(req.body, () => {
+		res.json({ status: 'ok' });
+	});
 });
 
 app.listen(port, () => console.log(`-------- Server is running on port ${3000} -------- `));
