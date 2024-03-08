@@ -87,6 +87,7 @@ class HomePage extends HTMLElement {
 						const userId = data.id;
 						state.setName(name);
 						state.setEmail(email);
+						state.setUserId(userId);
 
 						if (roomIdLabel.classList.contains('disabled')) this.createRoom(userId);
 						else {

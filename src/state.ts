@@ -10,7 +10,8 @@ export const state = {
 		email: '',
 		messages: [],
 		roomId: '',
-		roomOwnerName: '',
+		roomOwnerId: '',
+		userId: '',
 	},
 	listeners: [],
 	// No se si llamarle init o de otra manera, pq en realidad no está al principio del todo
@@ -21,15 +22,10 @@ export const state = {
 			.then((res) => res.json())
 			.then((data) => {
 				const rtdbRoomId = data.rtdbRoomId;
-				// state.setRoomOwnerName(rtdbRoomId); // Ver donde ponerlo
-				const chatroomsRef = ref(rtdb, `/chatroom/rooms/${rtdbRoomId}/messages`);
-
-				// const ownerRef = ref(rtdb, `/chatroom/rooms/${rtdbRoomId}/owner`);
-				// leerlo una vez
-				// tendria que obtener el id del usuario y comparar si es igual con el del owner
+				const messagesRef = ref(rtdb, `/chatroom/rooms/${rtdbRoomId}/messages`);
 
 				onValue(
-					chatroomsRef,
+					messagesRef,
 					(snapshot) => {
 						const data = snapshot.val();
 						const dataArray = lodash.map(data);
@@ -41,6 +37,18 @@ export const state = {
 						console.error('Error al escuchar cambios en la base de datos:', error);
 					},
 				);
+				
+				const ownerRef = ref(rtdb, `/chatroom/rooms/${rtdbRoomId}/owner`)
+				onValue(ownerRef, (snapshot) => {
+					const data = snapshot.val();
+					state.setRoomOwnerId(data);					
+				},
+				(error) => {
+					console.error('Error al escuchar cambios en la base de datos:', error);
+				},
+			    {
+					onlyOnce : true
+				});
 			});
 	},
 	getState() {
@@ -51,9 +59,11 @@ export const state = {
 		this.listeners.forEach((callback) => callback());
 		console.log('nueva data', this.data);
 	},
-	// setRoomOwnerName(roomId: string) {
-	// 	const currentState = this.getState();
-	// },
+	setRoomOwnerId(userId: string) {
+		const currentState = this.getState();
+		currentState.roomOwnerId = userId;
+		this.setState(currentState);
+	},
 	setName(name: string) {
 		const currentState = this.getState();
 		currentState.name = name;
@@ -67,6 +77,11 @@ export const state = {
 	setRoomId(roomId: string) {
 		const currentState = this.getState();
 		currentState.roomId = roomId;
+		this.setState(currentState);
+	},
+	setUserId(userId: string) {
+		const currentState = this.getState();
+		currentState.userId = userId;
 		this.setState(currentState);
 	},
 	pushMessage(message: string) {

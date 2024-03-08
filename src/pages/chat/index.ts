@@ -10,8 +10,8 @@ class ChatPage extends HTMLElement {
 	shadow: ShadowRoot;
 	messages: Message[];
 	roomId: string;
-	roomOwnerName: string;
-	// userName: string;
+	roomOwnerId: string;
+	userId: string;
 	constructor() {
 		super();
 		this.shadow = this.attachShadow({ mode: 'open' });
@@ -21,6 +21,8 @@ class ChatPage extends HTMLElement {
 			const currentState = state.getState();
 			this.messages = currentState.messages;
 			this.roomId = currentState.roomId;
+            this.roomOwnerId = currentState.roomOwnerId;
+            this.userId = currentState.userId;
 			// this.name = currentState.name;
 			this.render();
 		});
@@ -29,7 +31,9 @@ class ChatPage extends HTMLElement {
 	}
 	render() {
 		/* this.roomOwnerName.toLowerCase() == this.userName ? 'green' : '' */
+        /* Ver como poner los owner para los colores */
 		/* Para el tema de los mensajes poner en verde a los que son del owner, necesito el id del owner  */
+        /*  */
 		this.shadow.innerHTML = `
             <custom-header></custom-header>
             <div class="content-container">
@@ -41,8 +45,8 @@ class ChatPage extends HTMLElement {
 										?.map(
 											(el) => `
                 <div class="message-container">
-                    <span class="message-from ${el.from.toLowerCase() == 'lucho' ? 'mine' : ''}">${el.from}</span>
-                    <div class="message-text-container ${el.from.toLowerCase() == 'lucho' ? 'mine' : ''}">
+                    <span class="message-from ${this.roomOwnerId == this.userId ? 'mine' : ''}">${el.from}</span>
+                    <div class="message-text-container ${this.roomOwnerId == this.userId ? 'mine' : ''}">
                         <p class="message-text">${el.message}</p>
                     </div>
                 </div>`,
