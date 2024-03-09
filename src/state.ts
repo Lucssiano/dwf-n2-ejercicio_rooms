@@ -11,12 +11,14 @@ export const state = {
 		messages: [],
 		roomId: '',
 		roomOwnerId: '',
+		roomOwnerName: '',
 		userId: '',
 	},
 	listeners: [],
-	// No se si llamarle init o de otra manera, pq en realidad no está al principio del todo
 	init() {
-		// localStorage.removeItem('name');
+		const savedState = localStorage.getItem('state');
+		if (savedState) this.setState(JSON.parse(savedState));
+
 		const currentState = this.getState();
 		fetch(`${API_BASE_URL}/rooms/${currentState.roomId}`)
 			.then((res) => res.json())
@@ -37,18 +39,21 @@ export const state = {
 						console.error('Error al escuchar cambios en la base de datos:', error);
 					},
 				);
-				
-				const ownerRef = ref(rtdb, `/chatroom/rooms/${rtdbRoomId}/owner`)
-				onValue(ownerRef, (snapshot) => {
-					const data = snapshot.val();
-					state.setRoomOwnerId(data);					
-				},
-				(error) => {
-					console.error('Error al escuchar cambios en la base de datos:', error);
-				},
-			    {
-					onlyOnce : true
-				});
+
+				const ownerRef = ref(rtdb, `/chatroom/rooms/${rtdbRoomId}/owner`);
+				onValue(
+					ownerRef,
+					(snapshot) => {
+						const data = snapshot.val();
+						state.setRoomOwnerId(data);
+					},
+					(error) => {
+						console.error('Error al escuchar cambios en la base de datos:', error);
+					},
+					{
+						onlyOnce: true,
+					},
+				);
 			});
 	},
 	getState() {
@@ -56,13 +61,51 @@ export const state = {
 	},
 	setState(newState) {
 		this.data = newState;
+		localStorage.setItem('state', JSON.stringify(newState));
 		this.listeners.forEach((callback) => callback());
 		console.log('nueva data', this.data);
+	},
+	signUp(name: string, email: string) {
+		return fetch(`${API_BASE_URL}/signup`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ name, email }),
+		}).then((res) => res.json());
+	},
+	signIn(name: string, email: string) {
+		return fetch(`${API_BASE_URL}/auth`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ name, email }),
+		}).then((res) => res.json());
+	},
+	createRoom() {
+		const currentState = this.getState();
+		return fetch(`${API_BASE_URL}/rooms`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ userId: currentState.userId }),
+		}).then((res) => res.json());
 	},
 	setRoomOwnerId(userId: string) {
 		const currentState = this.getState();
 		currentState.roomOwnerId = userId;
 		this.setState(currentState);
+	},
+	getRoomOwnerName() {
+		const currentState = this.getState();
+		fetch(`${API_BASE_URL}/users/${currentState.roomOwnerId}`)
+			.then((res) => res.json())
+			.then((data) => {
+				currentState.roomOwnerName = data.name;
+				this.setState(currentState);
+			});
 	},
 	setName(name: string) {
 		const currentState = this.getState();
@@ -98,14 +141,6 @@ export const state = {
 					body: JSON.stringify({ from: currentState.name, message }),
 				});
 			});
-
-		// fetch(`${API_BASE_URL}/messages`, {
-		// 	method: 'POST',
-		// 	headers: {
-		// 		'Content-Type': 'application/json',
-		// 	},
-		// 	body: JSON.stringify({ from: currentState.name, message: message }),
-		// });
 	},
 	subscribe(callback: (any) => any) {
 		this.listeners.push(callback);

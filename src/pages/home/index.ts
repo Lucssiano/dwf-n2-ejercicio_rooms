@@ -1,8 +1,6 @@
 import { Router } from '@vaadin/router';
 import { state } from '../../state';
 
-const API_BASE_URL = 'http://localhost:3000';
-
 class HomePage extends HTMLElement {
 	shadow: ShadowRoot;
 	constructor() {
@@ -12,23 +10,7 @@ class HomePage extends HTMLElement {
 	connectedCallback() {
 		this.render();
 	}
-	/* Ver de pasarlo al state */
-	createRoom(userId: string) {
-		fetch(`${API_BASE_URL}/rooms`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({ userId }),
-		})
-			.then((res) => res.json())
-			.then((data) => {
-				if (data.roomId) {
-					state.setRoomId(data.roomId.toString());
-					Router.go('/chat');
-				}
-			});
-	}
+	/* PASARLO al state */
 	render() {
 		this.shadow.innerHTML = `
         <custom-header></custom-header>
@@ -70,38 +52,36 @@ class HomePage extends HTMLElement {
 			const name = nameEl.value;
 			const email = emailEl.value;
 
-			// Ver si hacer todos los fetch desde el state
+			state.signIn(name, email).then((data) => {
+				// Si hay un mensaje es porque se encontró el usuario, significa que está en la db
+				// Por ende setear el mail y el name en el estado
+				if (data.message) {
+					const userId = data.id;
+					state.setName(name);
+					state.setEmail(email);
+					state.setUserId(userId);
 
-			fetch(`${API_BASE_URL}/auth`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ email }),
-			})
-				.then((res) => res.json())
-				.then((data) => {
-					// Si hay un mensaje es porque se encontró el usuario, significa que está en la db
-					// Por ende setear el mail y el name en el estado
-					if (data.message) {
-						const userId = data.id;
-						state.setName(name);
-						state.setEmail(email);
-						state.setUserId(userId);
-
-						if (roomIdLabel.classList.contains('disabled')) this.createRoom(userId);
-						else {
-							// Unirse a room existente
-							const roomId = roomIdLabel.querySelector('.room-id-input') as HTMLInputElement;
-							state.setRoomId(roomId.value);
-							Router.go('/chat');
-						}
-					} else {
-						// Si no hay mensaje es porque no se encontró el usuario
-						// Significa que no está en la db, por ende que se registre
-						alert('Usuario no encontrado, por favor regístrese');
+					if (roomIdLabel.classList.contains('disabled'))
+						state.createRoom().then((data) => {
+							if (data.roomId) {
+								state.setRoomId(data.roomId.toString());
+								Router.go('/chat');
+							} else {
+								alert('Error al crear la sala');
+							}
+						});
+					else {
+						// Unirse a room existente
+						const roomId = roomIdLabel.querySelector('.room-id-input') as HTMLInputElement;
+						state.setRoomId(roomId.value);
+						Router.go('/chat');
 					}
-				});
+				} else {
+					// Si no hay mensaje es porque no se encontró el usuario
+					// Significa que no está en la db, por ende que se registre
+					alert('Usuario no encontrado, verifique que haya colocado bien el email y el nombre, o por favor regístrese');
+				}
+			});
 		});
 
 		const signUpButton = this.shadow.querySelector('.sign-up-button');

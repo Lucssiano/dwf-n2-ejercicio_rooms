@@ -29,9 +29,10 @@ app.post('/signup', (req, res) => {
 
 /* Auth o login*/
 app.post('/auth', (req, res) => {
-	const { email } = req.body;
+	const { name, email } = req.body;
 	usersCollection
 		.where('email', '==', email)
+		.where('name', '==', name)
 		.get()
 		.then((snapshot) => {
 			if (snapshot.empty) {
@@ -83,6 +84,19 @@ app.post('/messages/:rtdbId', (req, res) => {
 	chatRoomRef.push(req.body, () => {
 		res.json({ status: 'ok' });
 	});
+});
+
+app.get('/users/:userId', (req, res) => {
+	const { userId } = req.params;
+
+	usersCollection
+		.doc(userId)
+		.get()
+		.then((user) => {
+			const userData = user.data();
+			if (user.exists) res.json(userData);
+			else res.status(401).json({ error: 'User does not exists' });
+		});
 });
 
 app.listen(port, () => console.log(`-------- Server is running on port ${3000} -------- `));

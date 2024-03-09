@@ -10,7 +10,7 @@ class ChatPage extends HTMLElement {
 	shadow: ShadowRoot;
 	messages: Message[];
 	roomId: string;
-	roomOwnerId: string;
+	roomOwnerName: string;
 	userId: string;
 	constructor() {
 		super();
@@ -21,19 +21,15 @@ class ChatPage extends HTMLElement {
 			const currentState = state.getState();
 			this.messages = currentState.messages;
 			this.roomId = currentState.roomId;
-            this.roomOwnerId = currentState.roomOwnerId;
-            this.userId = currentState.userId;
-			// this.name = currentState.name;
+			this.roomOwnerName = currentState.roomOwnerName;
+			this.userId = currentState.userId;
 			this.render();
 		});
 		this.render();
 		state.init();
+		state.getRoomOwnerName();
 	}
 	render() {
-		/* this.roomOwnerName.toLowerCase() == this.userName ? 'green' : '' */
-        /* Ver como poner los owner para los colores */
-		/* Para el tema de los mensajes poner en verde a los que son del owner, necesito el id del owner  */
-        /*  */
 		this.shadow.innerHTML = `
             <custom-header></custom-header>
             <div class="content-container">
@@ -45,8 +41,8 @@ class ChatPage extends HTMLElement {
 										?.map(
 											(el) => `
                 <div class="message-container">
-                    <span class="message-from ${this.roomOwnerId == this.userId ? 'mine' : ''}">${el.from}</span>
-                    <div class="message-text-container ${this.roomOwnerId == this.userId ? 'mine' : ''}">
+                    <span class="message-from ${this.roomOwnerName == el.from ? 'mine' : ''}">${el.from}</span>
+                    <div class="message-text-container ${this.roomOwnerName == el.from ? 'mine' : ''}">
                         <p class="message-text">${el.message}</p>
                     </div>
                 </div>`,
@@ -64,7 +60,6 @@ class ChatPage extends HTMLElement {
 
 		const homeButton = this.shadow.querySelector('.home-button');
 		homeButton.addEventListener('click', () => Router.go('/home'));
-		/* Los mensajes de "lucho" siempre se ven en verde y cualquier otro mensaje se ve en gris y el nombre arriba */
 
 		/* No puedo usar los componentes button y fieldset porque no se lleva bien con el form */
 		/* Para el button podría hacer un custom event que cuando haga click en el componente se dispare el submit del form, pero para el fieldset no se me ocurriria como */

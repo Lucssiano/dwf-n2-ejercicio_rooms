@@ -33,24 +33,15 @@ class SignUpPage extends HTMLElement {
 			const name = nameEl.value;
 			const email = emailEl.value;
 
-			fetch(`${API_BASE_URL}/signup`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ name, email }),
-			})
-				.then((res) => res.json())
-				.then((data) => {
-					if (data.message) {
-						// Poner por un tiempo un cartel que diga que se registró correctamente y que se está volviendo a la home
-						alert(data.message + ' ,se volvera a la Home');
-						// console.log(data.id);
-						Router.go('/home');
-					} else {
-						alert('Error al registrarse, este usuario ya existe, volve a la home y logueate');
-					}
-				});
+			state.signUp(name, email).then((data) => {
+				if (data.message) {
+					// Poner por un tiempo un cartel que diga que se registró correctamente y que se está volviendo a la home
+					alert(data.message + ' ,se volvera a la Home');
+					Router.go('/home');
+				} else {
+					alert('Error al registrarse, este usuario ya existe, volve a la home y logueate');
+				}
+			});
 		});
 
 		const homeButton = this.shadow.querySelector('.home-button');
